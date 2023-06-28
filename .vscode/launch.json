@@ -1,0 +1,14 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "modbus_client_serial",
+            "request": "launch",
+            "type": "dart",
+            "program": "example\\modbus_client_serial_example.dart"
+        }
+    ]
+}
