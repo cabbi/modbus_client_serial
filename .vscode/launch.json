@@ -3,12 +3,24 @@
     // Hover to view descriptions of existing attributes.
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
-    "configurations": [
+    "configurations": [ 
         {
-            "name": "modbus_client_serial",
+            "name": "read example",
             "request": "launch",
             "type": "dart",
-            "program": "example\\modbus_client_serial_example.dart"
+            "program": "example\\read_request_example.dart"
+        },
+        {
+            "name": "read group example",
+            "request": "launch",
+            "type": "dart",
+            "program": "example\\read_group_request_example.dart"
+        },
+        {
+            "name": "write example",
+            "request": "launch",
+            "type": "dart",
+            "program": "example\\write_request_example.dart"
         }
     ]
 }
