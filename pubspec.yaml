@@ -1,7 +1,7 @@
 name: modbus_client_serial
-description: A starting point for Dart libraries or applications.
+description: This is the Modbus Client (ASCII and RTU) package sending requests to a remote device via Serial Port
 version: 1.0.0
-# repository: https://github.com/my_org/my_repo
+repository: https://github.com/cabbi/modbus_client_serial
 
 environment:
   sdk: ^2.17.0

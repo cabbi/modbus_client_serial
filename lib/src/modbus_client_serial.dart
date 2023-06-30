@@ -20,10 +20,6 @@ abstract class ModbusClientSerial extends ModbusClient {
   final SerialParity parity;
   final SerialFlowControl flowControl;
 
-  final Duration connectionTimeout;
-  final Duration responseTimeout;
-  final Duration? delayAfterConnect;
-
   SerialPort? _serialPort;
   SerialPortConfig? _serialConfig;
   final Lock _lock = Lock();
@@ -31,14 +27,13 @@ abstract class ModbusClientSerial extends ModbusClient {
   ModbusClientSerial(
       {required this.portName,
       super.unitId,
+      super.connectionMode = ModbusConnectionMode.autoConnectAndKeepConnected,
       this.baudRate = SerialBaudRate.b19200,
       this.dataBits = SerialDataBits.bits8,
       this.stopBits = SerialStopBits.one,
       this.parity = SerialParity.none,
       this.flowControl = SerialFlowControl.rtsCts,
-      this.connectionTimeout = const Duration(seconds: 3),
-      this.responseTimeout = const Duration(seconds: 3),
-      this.delayAfterConnect});
+      super.responseTimeout = const Duration(seconds: 3)});
 
   /// Returns the serial telegram checksum length
   int get checksumByteCount;
@@ -47,12 +42,14 @@ abstract class ModbusClientSerial extends ModbusClient {
   Uint8List _getTxTelegram(ModbusRequest request, int unitId);
 
   /// Read response from device.
-  ModbusResponseCode _readResponseHeader(_ModbusSerialResponse response);
+  ModbusResponseCode _readResponseHeader(
+      _ModbusSerialResponse response, int timeoutMillis);
 
   /// Reads the full pdu response from device.
   ///
-  /// NOTE: response header should be already being read!
-  ModbusResponseCode _readResponsePdu(_ModbusSerialResponse response);
+  /// NOTE: response header should be read already!
+  ModbusResponseCode _readResponsePdu(
+      _ModbusSerialResponse response, int timeoutMillis);
 
   /// Returns true if connection is established
   @override
@@ -61,26 +58,26 @@ abstract class ModbusClientSerial extends ModbusClient {
   /// Close the connection
   @override
   Future<void> disconnect() async {
-    if (_serialConfig != null) {
-      _serialConfig!.dispose();
-      _serialConfig = null;
-    }
+    ModbusAppLogger.fine("Closing serial port $portName...");
     if (_serialPort != null) {
       _serialPort!.close();
       _serialPort!.dispose();
       _serialPort = null;
     }
+    if (_serialConfig != null) {
+      //_serialConfig!.dispose(); Config already disposed!
+      _serialConfig = null;
+    }
   }
 
-  @override
-
   /// Sends a modbus request
-  Future<ModbusResponseCode> send(ModbusRequest request,
-      {bool autoConnect = true}) async {
-    return _lock.synchronized(() async {
+  @override
+  Future<ModbusResponseCode> send(ModbusRequest request) async {
+    var resTimeoutMillis = getResponseTimeout(request).inMilliseconds;
+    var res = await _lock.synchronized(() async {
       // Connect if needed
       try {
-        if (autoConnect) {
+        if (connectionMode != ModbusConnectionMode.doNotConnect) {
           await connect();
         }
         if (!isConnected) {
@@ -95,6 +92,9 @@ abstract class ModbusClientSerial extends ModbusClient {
       // Reset this request in case it was already used before
       request.reset();
 
+      // Start a stopwatch for the request timeout
+      final reqStopwatch = Stopwatch()..start();
+
       // Send the request data
       var unitId = getUnitId(request);
       try {
@@ -102,8 +102,16 @@ abstract class ModbusClientSerial extends ModbusClient {
         _serialPort!.flush();
 
         // Sent the serial telegram
-        _serialPort!.write(_getTxTelegram(request, unitId), timeout: 2000);
-      } catch (_) {
+        var reqTxData = _getTxTelegram(request, unitId);
+        int txDataCount =
+            _serialPort!.write(reqTxData, timeout: resTimeoutMillis);
+        if (txDataCount < reqTxData.length) {
+          request.setResponseCode(ModbusResponseCode.requestTimeout);
+          return request.responseCode;
+        }
+      } catch (ex) {
+        ModbusAppLogger.severe(
+            "Unexpected exception in sending data to $portName", ex);
         request.setResponseCode(ModbusResponseCode.requestTxFailed);
         return request.responseCode;
       }
@@ -114,23 +122,35 @@ abstract class ModbusClientSerial extends ModbusClient {
           request: request,
           unitId: unitId,
           checksumByteCount: checksumByteCount);
-      var responseCode = _readResponseHeader(response);
+      int remainingMillis = resTimeoutMillis - reqStopwatch.elapsedMilliseconds;
+      var responseCode = remainingMillis > 0
+          ? _readResponseHeader(response, remainingMillis)
+          : ModbusResponseCode.requestTimeout;
       if (responseCode != ModbusResponseCode.requestSucceed) {
         request.setResponseCode(responseCode);
         return request.responseCode;
       }
 
       // Lets wait the rest of the PDU response
-      var resCode = _readResponsePdu(response);
-      if (resCode != ModbusResponseCode.requestSucceed) {
-        request.setResponseCode(resCode);
+      remainingMillis = resTimeoutMillis - reqStopwatch.elapsedMilliseconds;
+      responseCode = remainingMillis > 0
+          ? _readResponsePdu(response, remainingMillis)
+          : ModbusResponseCode.requestTimeout;
+      if (responseCode != ModbusResponseCode.requestSucceed) {
+        request.setResponseCode(responseCode);
         return request.responseCode;
       }
 
       // Set the request response based on received PDU
       request.setFromPduResponse(response.pdu);
+
       return request.responseCode;
     });
+    // Need to disconnect?
+    if (connectionMode == ModbusConnectionMode.autoConnectAndDisconnect) {
+      await disconnect();
+    }
+    return res;
   }
 
   /// Connect the port if not already done or disconnected
@@ -140,6 +160,7 @@ abstract class ModbusClientSerial extends ModbusClient {
       return true;
     }
 
+    ModbusAppLogger.fine("Opening serial port $portName...");
     // New connection
     _serialPort = SerialPort(portName);
     if (!_serialPort!.openReadWrite()) {
@@ -155,11 +176,6 @@ abstract class ModbusClientSerial extends ModbusClient {
       ..parity = parity.intValue
       ..setFlowControl(flowControl.intValue);
     _serialPort!.config = _serialConfig!;
-
-    // Is a delay requested?
-    if (delayAfterConnect != null) {
-      await Future.delayed(delayAfterConnect!);
-    }
 
     return true;
   }

@@ -5,14 +5,13 @@ class ModbusClientSerialAscii extends ModbusClientSerial {
   ModbusClientSerialAscii(
       {required super.portName,
       super.unitId,
+      super.connectionMode = ModbusConnectionMode.autoConnectAndKeepConnected,
       super.baudRate = SerialBaudRate.b19200,
       super.dataBits = SerialDataBits.bits8,
       super.stopBits = SerialStopBits.one,
       super.parity = SerialParity.none,
       super.flowControl = SerialFlowControl.rtsCts,
-      super.connectionTimeout = const Duration(seconds: 3),
-      super.responseTimeout = const Duration(seconds: 3),
-      super.delayAfterConnect});
+      super.responseTimeout = const Duration(seconds: 3)});
 
   @override
   int get checksumByteCount => 1;
@@ -31,12 +30,12 @@ class ModbusClientSerialAscii extends ModbusClientSerial {
 
   /// Read response from device.
   @override
-  ModbusResponseCode _readResponseHeader(_ModbusSerialResponse response) {
+  ModbusResponseCode _readResponseHeader(
+      _ModbusSerialResponse response, int timeoutMillis) {
     try {
       // Read header data
       var byteCount = 3 * 2 + 1;
-      var rxData =
-          _serialPort!.read(byteCount, timeout: responseTimeout.inMilliseconds);
+      var rxData = _serialPort!.read(byteCount, timeout: timeoutMillis);
 
       // Received requested data?
       if (rxData.length < byteCount) {
@@ -63,12 +62,12 @@ class ModbusClientSerialAscii extends ModbusClientSerial {
   ///
   /// NOTE: response header should be already being read!
   @override
-  ModbusResponseCode _readResponsePdu(_ModbusSerialResponse response) {
+  ModbusResponseCode _readResponsePdu(
+      _ModbusSerialResponse response, int timeoutMillis) {
     try {
       // Header has been already acquired (i.e. -2) + lrc + /r/n
       int byteCount = 2 * (response.request.responsePduLength - 2) + 3;
-      var rxData =
-          _serialPort!.read(byteCount, timeout: responseTimeout.inMilliseconds);
+      var rxData = _serialPort!.read(byteCount, timeout: timeoutMillis);
       if (rxData.length < byteCount) {
         return ModbusResponseCode.requestTimeout;
       }
