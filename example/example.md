@@ -1,10 +1,14 @@
 ## Read request
 
 ``` dart
+import 'package:logging/logging.dart';
 import 'package:modbus_client/modbus_client.dart';
 import 'package:modbus_client_serial/modbus_client_serial.dart';
 
 void main() async {
+  // Simple modbus logging
+  ModbusAppLogger(Level.FINE);
+
   // Create a modbus int16 register element
   var batteryTemperature = ModbusInt16Register(
       name: "BatteryTemperature",
@@ -28,6 +32,7 @@ void main() async {
 ## Group read request
 
 ``` dart
+import 'package:logging/logging.dart';
 import 'package:modbus_client/modbus_client.dart';
 import 'package:modbus_client_serial/modbus_client_serial.dart';
 
@@ -45,6 +50,9 @@ enum BatteryStatus implements ModbusIntEnum {
 }
 
 void main() async {
+  // Simple modbus logging
+  ModbusAppLogger(Level.FINE);
+
   // Create a modbus elements group
   var batteryRegs = ModbusElementsGroup([
     ModbusEnumRegister(
@@ -90,6 +98,7 @@ void main() async {
 ## Write request
 
 ``` dart
+import 'package:logging/logging.dart';
 import 'package:modbus_client/modbus_client.dart';
 import 'package:modbus_client_serial/modbus_client_serial.dart';
 
@@ -112,6 +121,9 @@ enum BatteryStatus implements ModbusIntEnum {
 }
 
 void main() async {
+  // Simple modbus logging
+  ModbusAppLogger(Level.FINE);
+
   var batteryStatus = ModbusEnumRegister(
       name: "BatteryStatus",
       address: 11,
