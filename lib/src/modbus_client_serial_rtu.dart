@@ -1,4 +1,4 @@
-part of modbus_client_serial_impl;
+part of 'modbus_client_serial.dart';
 
 /// The serial Modbus RTU client class.
 class ModbusClientSerialRtu extends ModbusClientSerial {

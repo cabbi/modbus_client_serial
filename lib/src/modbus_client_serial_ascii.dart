@@ -1,4 +1,4 @@
-part of modbus_client_serial_impl;
+part of 'modbus_client_serial.dart';
 
 /// The serial Modbus ASCII client class.
 class ModbusClientSerialAscii extends ModbusClientSerial {

@@ -1,6 +1,6 @@
 name: modbus_client_serial
 description: This is the Modbus Client (ASCII and RTU) package sending requests to a remote device via Serial Port
-version: 1.0.1
+version: 1.0.1+1
 repository: https://github.com/cabbi/modbus_client_serial
 
 environment:
@@ -13,5 +13,5 @@ dependencies:
   modbus_client: ^1.0.2
 
 dev_dependencies:
-  lints: ^2.0.0
+  lints: ^3.0.0
   test: ^1.21.0
