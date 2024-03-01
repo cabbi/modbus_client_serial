@@ -1,3 +1,7 @@
+## 1.0.3
+- Bug fix in response error code handling
+- updated reference to new modbus_client 1.1.2 (Bug fixing and new ModbusFileMultipleRecords class) 
+
 ## 1.0.2
 - updated reference to new modbus_client 1.1.1 (Modbus Read & Write file records support)
 

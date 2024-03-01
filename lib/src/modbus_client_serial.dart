@@ -207,7 +207,7 @@ class _ModbusSerialResponse {
     if (_rxData![0] != unitId) {
       return ModbusResponseCode.requestRxWrongUnitId;
     }
-    if (_rxData![1] & 0x80 != 0) {
+    if ((_rxData![1] & 0x80) != 0) {
       return ModbusResponseCode.fromCode(_rxData![2]);
     }
     if (_rxData![1] != request.functionCode) {
