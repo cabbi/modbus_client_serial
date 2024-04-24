@@ -1,3 +1,6 @@
+## 1.2.0
+- dependency set to new modbus_client 1.2.0
+  
 ## 1.0.3
 - Bug fix in response error code handling
 - updated reference to new modbus_client 1.1.2 (Bug fixing and new ModbusFileMultipleRecords class) 
