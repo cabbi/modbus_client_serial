@@ -210,7 +210,7 @@ class _ModbusSerialResponse {
     if ((_rxData![1] & 0x80) != 0) {
       return ModbusResponseCode.fromCode(_rxData![2]);
     }
-    if (_rxData![1] != request.functionCode) {
+    if (_rxData![1] != request.functionCode.code) {
       return ModbusResponseCode.requestRxWrongFunctionCode;
     }
     return ModbusResponseCode.requestSucceed;
