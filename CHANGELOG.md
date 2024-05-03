@@ -1,3 +1,6 @@
+## 1.2.1+1
+- updated reference to new modbus_client 1.2.1
+
 ## 1.2.1
 - Bug fix (https://github.com/cabbi/modbus_client/issues/4)
 
