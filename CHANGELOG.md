@@ -1,3 +1,6 @@
+## 1.2.1+3
+- updated reference to new modbus_client 1.3.1 (64 bit integers support)
+
 ## 1.2.1+2
 - updated reference to new modbus_client 1.3.0 (Endianness support)
 
