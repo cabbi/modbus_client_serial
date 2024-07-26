@@ -27,12 +27,36 @@ class ModbusClientSerialRtu extends ModbusClientSerial {
 
   /// Read response from device.
   @override
-  ModbusResponseCode _readResponseHeader(
-      _ModbusSerialResponse response, int timeoutMillis) {
+  Future<ModbusResponseCode> _readResponseHeader(
+      _ModbusSerialResponse response, int timeoutMillis) async {
     try {
       // Read header data
       var byteCount = 3;
-      var rxData = _serialPort!.read(byteCount, timeout: timeoutMillis);
+      Uint8List rxData;
+      if (Platform.isAndroid) {
+        List<int> inData = [];
+        final completer = Completer<Uint8List>();
+        final timeout = Duration(milliseconds: timeoutMillis);
+
+        StreamSubscription<List<int>> subscription;
+        subscription = _androidUsbPort!.inputStream!.listen((data) {
+          inData.addAll(data);
+          if (inData.length >= byteCount) {
+            completer.complete(Uint8List.fromList(inData));
+          }
+        }, onError: (error) {
+          completer.completeError(error);
+        }, cancelOnError: true);
+        rxData = await completer.future.timeout(timeout, onTimeout: () {
+          subscription.cancel();
+          throw TimeoutException('Read operation timed out');
+        });
+        try {
+          subscription.cancel();
+        } catch (_) {}
+      } else {
+        rxData = _serialPort!.read(byteCount, timeout: timeoutMillis);
+      }
 
       // Received requested data?
       if (rxData.length < byteCount) {
