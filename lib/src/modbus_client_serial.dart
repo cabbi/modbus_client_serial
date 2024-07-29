@@ -1,14 +1,12 @@
 library modbus_client_serial_impl;
 
 import 'dart:async';
-import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:libserialport/libserialport.dart';
 import 'package:synchronized/synchronized.dart';
 import 'package:modbus_client/modbus_client.dart';
 import 'package:modbus_client_serial/modbus_client_serial.dart';
-import 'package:usb_serial/usb_serial.dart';
 
 part 'modbus_client_serial_rtu.dart';
 part 'modbus_client_serial_ascii.dart';
@@ -23,9 +21,7 @@ abstract class ModbusClientSerial extends ModbusClient {
   final SerialFlowControl flowControl;
 
   SerialPort? _serialPort;
-  UsbPort? _androidUsbPort;
   SerialPortConfig? _serialConfig;
-
   final Lock _lock = Lock();
 
   ModbusClientSerial(
@@ -46,7 +42,7 @@ abstract class ModbusClientSerial extends ModbusClient {
   Uint8List _getTxTelegram(ModbusRequest request, int unitId);
 
   /// Read response from device.
-  Future<ModbusResponseCode> _readResponseHeader(
+  ModbusResponseCode _readResponseHeader(
       _ModbusSerialResponse response, int timeoutMillis);
 
   /// Reads the full pdu response from device.
@@ -57,27 +53,16 @@ abstract class ModbusClientSerial extends ModbusClient {
 
   /// Returns true if connection is established
   @override
-  bool get isConnected {
-    if (Platform.isAndroid) {
-      return _androidUsbPort == null;
-    } else {
-      return _serialPort != null;
-    }
-  }
+  bool get isConnected => _serialPort != null;
 
   /// Close the connection
   @override
   Future<void> disconnect() async {
     ModbusAppLogger.fine("Closing serial port $portName...");
-    if (Platform.isAndroid) {
-      _androidUsbPort?.close();
-      _androidUsbPort = null;
-    } else {
-      if (_serialPort != null) {
-        _serialPort!.close();
-        _serialPort!.dispose();
-        _serialPort = null;
-      }
+    if (_serialPort != null) {
+      _serialPort!.close();
+      _serialPort!.dispose();
+      _serialPort = null;
     }
     if (_serialConfig != null) {
       //_serialConfig!.dispose(); Config already disposed!
@@ -114,22 +99,12 @@ abstract class ModbusClientSerial extends ModbusClient {
       var unitId = getUnitId(request);
       try {
         // Flush both tx & rx buffers (discard old pending requests & responses)
-        if (!Platform.isAndroid) {
-          _serialPort!.flush();
-        }
+        _serialPort!.flush();
 
         // Sent the serial telegram
         var reqTxData = _getTxTelegram(request, unitId);
-        int txDataCount;
-        if (Platform.isAndroid) {
-          await _androidUsbPort!
-              .write(reqTxData)
-              .timeout(Duration(milliseconds: resTimeoutMillis));
-          txDataCount = reqTxData.length;
-        } else {
-          txDataCount =
-              _serialPort!.write(reqTxData, timeout: resTimeoutMillis);
-        }
+        int txDataCount =
+            _serialPort!.write(reqTxData, timeout: resTimeoutMillis);
         if (txDataCount < reqTxData.length) {
           request.setResponseCode(ModbusResponseCode.requestTimeout);
           return request.responseCode;
@@ -149,7 +124,7 @@ abstract class ModbusClientSerial extends ModbusClient {
           checksumByteCount: checksumByteCount);
       int remainingMillis = resTimeoutMillis - reqStopwatch.elapsedMilliseconds;
       var responseCode = remainingMillis > 0
-          ? await _readResponseHeader(response, remainingMillis)
+          ? _readResponseHeader(response, remainingMillis)
           : ModbusResponseCode.requestTimeout;
       if (responseCode != ModbusResponseCode.requestSucceed) {
         request.setResponseCode(responseCode);
@@ -187,70 +162,22 @@ abstract class ModbusClientSerial extends ModbusClient {
 
     ModbusAppLogger.fine("Opening serial port $portName...");
     // New connection
-    if (Platform.isAndroid) {
-      final androidUsbDevice = (await UsbSerial.listDevices())
-          .firstWhere((d) => d.deviceName == portName);
-      _androidUsbPort = await androidUsbDevice.create();
-      if (_androidUsbPort == null) {
-        return false;
-      }
-      var opened = await _androidUsbPort!.open();
-      if (!opened) {
-        _androidUsbPort!.close();
-        return false;
-      }
-
-      _serialConfig = SerialPortConfig()
-        ..baudRate = baudRate.intValue
-        ..bits = dataBits.intValue
-        ..stopBits = stopBits.intValue
-        ..parity = parity.intValue
-        ..setFlowControl(flowControl.intValue);
-
-      int flow;
-      switch (flowControl.intValue) {
-        case 0:
-          flow = 0;
-          break;
-        case 2:
-          flow = 1;
-          break;
-        case 3:
-          flow = 2;
-          break;
-        case 1:
-          flow = 3;
-          break;
-        default:
-          flow = 0;
-          break;
-      }
-      _androidUsbPort!.setFlowControl(flow);
-      _androidUsbPort!.setPortParameters(
-        baudRate.intValue,
-        dataBits.intValue,
-        stopBits.intValue,
-        parity.intValue,
-      );
-      return true;
-    } else {
-      _serialPort = SerialPort(portName);
-      if (!_serialPort!.openReadWrite()) {
-        _serialPort!.dispose();
-        return false;
-      }
-
-      // Update the config for your setup
-      _serialConfig = SerialPortConfig()
-        ..baudRate = baudRate.intValue
-        ..bits = dataBits.intValue
-        ..stopBits = stopBits.intValue
-        ..parity = parity.intValue
-        ..setFlowControl(flowControl.intValue);
-      _serialPort!.config = _serialConfig!;
-
-      return true;
+    _serialPort = SerialPort(portName);
+    if (!_serialPort!.openReadWrite()) {
+      _serialPort!.dispose();
+      return false;
     }
+
+    // Update the config for your setup
+    _serialConfig = SerialPortConfig()
+      ..baudRate = baudRate.intValue
+      ..bits = dataBits.intValue
+      ..stopBits = stopBits.intValue
+      ..parity = parity.intValue
+      ..setFlowControl(flowControl.intValue);
+    _serialPort!.config = _serialConfig!;
+
+    return true;
   }
 }
 
