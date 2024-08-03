@@ -3,7 +3,9 @@ library modbus_client_serial;
 import 'package:libserialport/libserialport.dart';
 import 'package:modbus_client/modbus_client.dart';
 
-export 'src/modbus_client_serial.dart';
+export 'src/modbus_client_serial_ascii.dart';
+export 'src/modbus_client_serial_rtu.dart';
+export 'src/modbus_serial_port.dart';
 
 /// Serial baud rates definition
 enum SerialBaudRate implements ModbusIntEnum {

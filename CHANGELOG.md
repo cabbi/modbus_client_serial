@@ -1,3 +1,6 @@
+## 1.3.0
+- updated reference to new modbus_client 1.4.0 to simplify modbus serial implementation
+
 ## 1.2.1+3
 - updated reference to new modbus_client 1.3.1 (64 bit integers support)
 
