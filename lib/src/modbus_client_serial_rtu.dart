@@ -12,7 +12,8 @@ class ModbusClientSerialRtu extends ModbusClientSerialRtuBase {
       SerialStopBits stopBits = SerialStopBits.one,
       SerialParity parity = SerialParity.none,
       SerialFlowControl flowControl = SerialFlowControl.rtsCts,
-      super.responseTimeout = const Duration(seconds: 3)})
+      super.responseTimeout = const Duration(seconds: 3),
+      super.flushOnRequest = true})
       : super(
             serialPort: LibSerialPort(
                 portName, baudRate, dataBits, stopBits, parity, flowControl));
