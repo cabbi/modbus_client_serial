@@ -1,3 +1,6 @@
+## 1.3.1
+- Added 'flushOnRequest' to ModbusClientSerial class (https://github.com/cabbi/modbus_client/issues/11)
+
 ## 1.3.0
 - updated reference to new modbus_client 1.4.0 to simplify modbus serial implementation
 

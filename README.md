@@ -2,9 +2,10 @@
 This is a set of packages implementing Modbus Client sending requests to a remote device (i.e. Modbus Server).
 
 - [Modbus Client](https://pub.dev/packages/modbus_client) is the base implementation for the **TCP/UDP** and **Serial** packages.
-- [Modbus Client UDP](https://pub.dev/packages/modbus_client_udp) implements the **UDP** protocol to send requests via **ethernet networks**.
 - [Modbus Client TCP](https://pub.dev/packages/modbus_client_tcp) implements the **TCP** protocol to send requests via **ethernet networks**.
+- [Modbus Client UDP](https://pub.dev/packages/modbus_client_udp) implements the **UDP** protocol to send requests via **ethernet networks**.
 - [Modbus Client Serial](https://pub.dev/packages/modbus_client_serial) implements the **ASCII** and **RTU** protocols to send requests via **Serial Port**
+- [Modbus Client Serial Android](https://pub.dev/packages/modbus_client_serial_android) implements the **ASCII** and **RTU** protocols to send requests via Android's **USB Serial Port**
 
 The split of the packages is done to minimize dependencies on your project.
 
@@ -17,6 +18,7 @@ The split of the packages is done to minimize dependencies on your project.
 - **Auto connection mode**: specify how the **send** command behaves by auto connecting and auto disconnecting from the client by setting the [ModbusConnectionMode](https://pub.dev/documentation/modbus_client/latest/modbus_client/ModbusConnectionMode.html)
 - **Unit id**: both the [Modbus Client](https://pub.dev/documentation/modbus_client/latest/modbus_client/ModbusClient-class.html) and the [Request](https://pub.dev/documentation/modbus_client/latest/modbus_client/ModbusElement/getReadRequest.html) can specify the target unit id. This can be useful when using serial clients where more units/devices can be attached to one serial client.
 - **Response timeout**: A timeout waiting the response can be set in the [Modbus Client](https://pub.dev/documentation/modbus_client/latest/modbus_client/ModbusClient-class.html) instance or in the [Request](https://pub.dev/documentation/modbus_client/latest/modbus_client/ModbusElement/getReadRequest.html) itself.
+- **Server discovery** (TCP only): discovers the modbus server from a starting IP address [Modbus Client TCP](https://pub.dev/documentation/modbus_client_tcp/latest/modbus_client_tcp/ModbusClientTcp/discover.html).
 - **Connection timeout** (TCP only): specify a connection timeout for the [Modbus Client TCP](https://pub.dev/documentation/modbus_client_tcp/latest/modbus_client_tcp/ModbusClientTcp-class.html).
 - **Delay after connect** (TCP only): you can apply an optional delay after server connection. In some cases (e.g. Huawei SUN2000 inverter) the server will not respond if requests are sent right after the connection.  
 - **Element types**: this package offers a variety of element types: <a href="#NumericElements">ModbusNumRegister (int16, uint16, int32, uint32, int64, uint64, float and double)</a>, <a href="#NumericElements">ModbusBitElement</a>, <a href="#EnumElements">ModbusEnumRegister</a>, <a href="#StatusElements">ModbusStatusRegister</a>, <a href="#BitMaskElements">ModbusBitMaskRegister</a>, <a href="#EpochElements">ModbusEpochRegister</a>, <a href="#BytesElements">ModbusBytesRegister</a>.
